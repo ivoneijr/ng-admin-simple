@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>The HTML5 Herald</title>
+  <meta name="description" content="The HTML5 Herald">
+  <meta name="author" content="SitePoint">
+
+
+  <link rel="stylesheet" href="http://ng-admin.marmelab.com/bower_components/ng-admin/build/ng-admin.min.css">
+
+  <script src="http://ng-admin.marmelab.com/bower_components/angular/angular.js"></script>
+  <script src="http://ng-admin.marmelab.com/bower_components/ng-admin/build/ng-admin.min.js"></script>
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <script>
+  /*global angular*/
+(function () {
+    "use strict";
+
+    var app = angular.module('myApp', ['ng-admin']);
+
+    app.config(function (NgAdminConfigurationProvider, RestangularProvider) {
+        var nga = NgAdminConfigurationProvider;
+
+        // use the custom query parameters function to format the API request correctly
+        RestangularProvider.addFullRequestInterceptor(function(element, operation, what, url, headers, params) {
+            if (operation == "getList") {
+                // custom pagination params
+                // if (params._page) {
+                //     params._start = (params._page - 1) * params._perPage;
+                //     params._end = params._page * params._perPage;
+                // }
+                delete params._page;
+                delete params._perPage;
+                // custom sort params
+                params.sort= ""
+                if (params._sortDir!="ASC") {
+                  params.sort+="-"
+                }
+                params.sort+=(params._sortField || "id")
+                delete params._sortField;
+                delete params._sortDir;
+                // custom filters
+                if (params._filters) {
+                    for (var filter in params._filters) {
+                        params[filter] = params._filters[filter];
+                    }
+                    delete params._filters;
+                }
+            }
+            return { params: params };
+        });
+
+        var admin = nga.application('Atlas Middleware Admin') // application main title
+            .baseApiUrl('http://prod-07:3000/'); // main API endpoint
+
+        // define all entities at the top to allow references between them
+        var post = nga.entity('resources') // the API endpoint for posts will be http://localhost:3000/posts/:id
+          .identifier(nga.field('id'));
+        // set the application entities
+        admin
+            .addEntity(post);
+
+        post.listView()
+          .title('Resources')
+          .infinitePagination(true)
+          .perPage(10)
+          .fields([
+            nga.field('id'),
+            nga.field('codproduto'),
+            nga.field('descricao1'),
+            nga.field('precovenda1'),
+            nga.field('created_at'),
+            nga.field('updated_at')
+          ])
+          .filters([
+            // nga.field('name', 'string').label('name').attributes({'placeholder': '.*'}),
+            // nga.field('type', 'string').label('type').attributes({'placeholder': 'dll|exe'}),
+          ])
+          .listActions(['show', 'edit', 'delete']);
+
+        post.creationView()
+            .fields([
+                nga.field('codproduto') // the default edit field type is "string", and displays as a text input
+                    .attributes({ placeholder: 'the code' }) // you can add custom attributes, too
+                    .validation({ required: true, minlength: 3, maxlength: 100 }), // add validation rules for fields
+                nga.field('descricao1', 'text') // text field type translates to a textarea
+            ]);
+
+        post.editionView()
+            .title('Edit Resource') // title() accepts a template string, which has access to the entry
+            .actions(['list', 'show', 'delete']) // choose which buttons appear in the top action bar. Show is disabled by default
+            .fields([
+                post.creationView().fields(), // fields() without arguments returns the list of fields. That way you can reuse fields from another view to avoid repetition
+            ]);
+
+        post.showView() // a showView displays one entry in full page - allows to display more data than in a a list
+          .fields([
+              nga.field('id'),
+              post.editionView().fields(), // reuse fields from another view in another order
+          ]);
+
+        admin.menu(nga.menu()
+            .addChild(nga.menu(post).icon('<span class="glyphicon glyphicon-file"></span>')) // customize the entity menu icon
+        );
+
+        nga.configure(admin);
+    });
+
+}());
+  </script>
+</head>
+<body ng-app="myApp">
+  <div ui-view></div>
+</body>
+</html>
