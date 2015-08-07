@@ -14,33 +14,92 @@
 
       var app = angular.module('myApp', ['ng-admin']);
 
-      var get = function(url, callback){
-        var xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function(){
-          if(xhr.readyState === 4){
-            callback(xhr.responseText,xhr.status);
-          }
-        };
-        xhr.open('GET',url);
-        xhr.send(null);
-      };
+      // var get = function(url, callback){
+      //   var xhr = new XMLHttpRequest();
+      //   xhr.onreadystatechange = function(){
+      //     if(xhr.readyState === 4){
+      //       callback(xhr.responseText,xhr.status);
+      //     }
+      //   };
+      //   xhr.open('GET',url);
+      //   xhr.send(null);
+      // };
 
 
-      var allResources;
-      get("http://localhost:3000/resources", function(data){
-        if(data){
-          allResources = data;
-        }else{
-          console.log("ERRRRRRRRRRRROOOOUW");
+      var allResources = [
+        {
+          "name": "zw14bbae",
+          "keys": [
+            "codigounico"
+          ],
+          "indexes": [
+            [
+              "codigounico"
+            ],
+            [
+              "codigobanco",
+              "codigoespecie"
+            ]
+          ],
+          "columns": [
+            "codigounico",
+            "codigobanco",
+            "codigoespecie",
+            "descricao",
+            "id"
+          ]
+        },
+        {
+          "name": "zw14bbao",
+          "keys": [
+            "codigounico"
+          ],
+          "indexes": [
+            [
+              "codigounico"
+            ],
+            [
+              "codigobanco",
+              "tipoocorrencia",
+              "codigoocorrencia"
+            ]
+          ],
+          "columns": [
+            "codigounico",
+            "codigobanco",
+            "codigoocorrencia",
+            "descricao",
+            "tipoocorrencia",
+            "ocorrenciainicial",
+            "exigecomplemento",
+            "informacaocomplementar",
+            "mascara"
+          ]
         }
-      });
-
-      if(allResources){
+      ];
+      // get("http://localhost:3000/resources", function(data){
+      //   if(data){
+      //     allResources = data;
+      //   }else{
+      //     console.log("ERRRRRRRRRRRROOOOUW");
+      //   }
+      // });
 
 
         app.config(function (NgAdminConfigurationProvider, RestangularProvider) {
 
           var nga = NgAdminConfigurationProvider;
+
+          // add a response intereceptor
+          RestangularProvider.addResponseInterceptor(function(data, operation, what, url, response, deferred) {
+            var extractedData;
+            // .. to look for getList operations
+            if (operation === "getList") {
+              // .. and handle the data and meta data
+              extractedData = [data];
+            }
+            return extractedData;
+          });
 
           // use the custom query parameters function to format the API request correctly
           RestangularProvider.addFullRequestInterceptor(function(element, operation, what, url, headers, params) {
@@ -72,65 +131,59 @@
           });
 
           var admin = nga.application('Atlas Middleware Admin') // application main title
-              .baseApiUrl('http://prod-04:3000/'); // main API endpoint
+            .baseApiUrl('http://prod-01/api/resources/schema/'); // main API endpoint
 
 
           // define all entities at the top to allow references between them
-          var post = nga.entity('resources') // the API endpoint for posts will be http://localhost:3000/posts/:id
-            .identifier(nga.field('id'));
+          var post = nga.entity(['zw14ppro']) // the API endpoint for posts will be http://localhost:3000/posts/:name
+            .identifier(nga.field('name'));
           // set the application entities
 
           admin
               .addEntity(post);
 
-
-
           post.listView()
-            .title('Resources')
-            .infinitePagination(true)
-            .perPage(30)
-            .fields([
-              nga.field('id'),
-              nga.field('codproduto'),
-              nga.field('descricao1'),
-              nga.field('precovenda1'),
-              nga.field('created_at'),
-              nga.field('updated_at')
-            ])
-            .filters([
-              // nga.field('name', 'string').label('name').attributes({'placeholder': '.*'}),
-              // nga.field('type', 'string').label('type').attributes({'placeholder': 'dll|exe'}),
+            .title('list')
+            .infinitePagination(true);
+
+          post.listView().fields([
+
+              nga.field('name')
+              // nga.field('descricao1'),
+              // nga.field('precovenda1'),
+              // nga.field('created_at'),
+              // nga.field('updated_at')
             ])
             .listActions(['show', 'edit', 'delete']);
 
-          post.creationView()
-              .fields([
-                  nga.field('codproduto') // the default edit field type is "string", and displays as a text input
-                      .attributes({ placeholder: 'the code' }) // you can add custom attributes, too
-                      .validation({ required: true, minlength: 3, maxlength: 100 }), // add validation rules for fields
-                  nga.field('descricao1', 'text') // text field type translates to a textarea
-              ]);
+          // post.creationView()
+              // .fields([
+                  // nga.field('name') // the default edit field type is "string", and displays as a text input
+          //             .attributes({ placeholder: 'the code' }) // you can add custom attributes, too
+          //             .validation({ required: true, minlength: 3, maxlength: 100 }), // add validation rules for fields
+          //         nga.field('descricao1', 'text') // text field type translates to a textarea
+              // ]);
 
-          post.editionView()
-              .title('Edit Resource') // title() accepts a template string, which has access to the entry
-              .actions(['list', 'show', 'delete']) // choose which buttons appear in the top action bar. Show is disabled by default
-              .fields([
-                  post.creationView().fields(), // fields() without arguments returns the list of fields. That way you can reuse fields from another view to avoid repetition
-              ]);
+          // post.editionView()
+          //     .title('Edit Resource') // title() accepts a template string, which has access to the entry
+          //     .actions(['list', 'show', 'delete']) // choose which buttons appear in the top action bar. Show is disabled by default
+          //     .fields([
+          //         post.creationView().fields(), // fields() without arguments returns the list of fields. That way you can reuse fields from another view to avoid repetition
+          //     ]);
 
-          post.showView() // a showView displays one entry in full page - allows to display more data than in a a list
-            .fields([
-                nga.field('id'),
-                post.editionView().fields(), // reuse fields from another view in another order
-            ]);
+          // post.showView() // a showView displays one entry in full page - allows to display more data than in a a list
+          //   .fields([
+          //       nga.field('id'),
+          //       post.editionView().fields(), // reuse fields from another view in another order
+          //   ]);
 
-          admin.menu(nga.menu()
-              .addChild(nga.menu(post).icon('<span class="glyphicon glyphicon-file"></span>')) // customize the entity menu icon
-          );
+          // admin.menu(nga.menu()
+          //     .addChild(nga.menu(post).icon('<span class="glyphicon glyphicon-file"></span>')) // customize the entity menu icon
+          // );
 
           nga.configure(admin);
         });
-      }
+
 
 
     </script>
