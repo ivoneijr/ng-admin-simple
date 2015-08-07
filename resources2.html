@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+
+    <title>Tocando Terror</title>
+    <meta name="description" content="The HTML5 Herald">
+    <meta name="author" content="SitePoint">
+
+
+    <link rel="stylesheet" href="http://ng-admin.marmelab.com/bower_components/ng-admin/build/ng-admin.min.css">
+
+    <script src="http://ng-admin.marmelab.com/bower_components/angular/angular.js"></script>
+    <script src="http://ng-admin.marmelab.com/bower_components/ng-admin/build/ng-admin.min.js"></script>
+
+
+    <!-- TESTE $RESOURCE -->
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.16/angular-resource.min.js"></script>
+
+    <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <script>
+      /*global angular*/
+      (function () {
+          "use strict";
+
+          // angular.module('myApp',['ngResource','myApp.controllers','myApp.services']); //myApp is our main module
+
+          // angular.module('myApp.services',[]);
+          // angular.module('myApp.services').factory('Resource', function($resource) {
+          //   return $resource('http://localhost:3000/resources/:id'); // Note the full endpoint address
+          // });
+
+          // angular.module('myApp.controllers',[]);
+          // angular.module('myApp.controllers').controller('ResourceController',function($scope, Resource) {
+          //   var resource = Resource.get({ id: $scope.id }, function() {
+          //     console.log(resource);
+          //   }); // get() returns a single resource
+
+          //   var resources = Resource.query(function() {
+          //     console.log(resources);
+          //   }); //query() returns all the resources
+
+          //   $scope.resource = new Resource(); //You can instantiate resource class
+
+          //   $scope.resource.data = 'some data';
+
+          //   Resource.save($scope.resource, function() {
+          //     //data saved. do something here.
+          //   }); //saves an resource. Assuming $scope.resource is the Resource object
+          // });
+
+          angular.module('myApp', ['ngResource'])
+
+            .factory('Resource', function($resource) {
+              return $resource('http://localhost:3000/resources/:id');
+            })
+
+            .controller('ResourceController', function($scope, Resource) {
+
+              $scope.title = "Resources";
+              $scope.getResources = Resource.query();
+
+              $scope.newResource = function() {
+                console.log(Resource.query());
+                var resource = new Resource($scope.postData);
+                resource.$save();
+              }
+            });
+      }());
+    </script>
+  </head>
+
+  <body ng-app="myApp">
+    <!-- <div ng-controller="ResourceController">
+      <h1> {{ title }} </h1>
+      {{ getResources }}
+    </div> -->
+
+    <div ng-controller="ResourceController">
+      <input type="text" placeholder="filtrar" ng-model="search">
+
+      <table style="width:60%" border="1">
+        <tr>
+          <td>ID</td>
+          <td>CODPRODUTO</td>
+          <td>DECRICAO1</td>
+          <td>PRECOVENDA1</td>
+          <td>APLICACAO</td>
+          <td>CREATED</td>
+          <td>UPDATED</td>
+        </tr>
+        <tr ng-repeat="resource in getResources | filter: search" >
+          <td>{{ resource.id }} </td>
+          <td>{{ resource.codproduto }}</td>
+          <td>{{ resource.descricao1 }}</td>
+          <td>{{ resource.precovenda1 }}</td>
+          <td>{{ resource.aplicacao }}</td>
+          <td>{{ resource.created_at }}</td>
+          <td>{{ resource.updated_at }}</td>
+        </tr>
+
+      </table>
+
+
+
+
+
+    </div>
+
+  </body>
+
+  <!-- <body ng-app="myApp" ng-controller="ResourceController">
+    <ion-content padding="true">
+      <form ng-submit="newResource()">
+        <label>New Resource:</label>
+        <textarea ng-model="postData.text"></textarea>
+        <button type="submit" class="button button-positive button-block">Create</button>
+      </form>
+    </ion-content>
+  </body> -->
+
+  <!-- <body ng-app="myApp">
+    <div ui-view></div>
+  </body> -->
+  <!-- <body ng-app="myApp" ng-controller="ResourceController"> -->
+
+
+    <!-- <ion-content padding="true">
+      <form ng-submit="newPost()">
+        <label>New Post:</label>
+        <textarea ng-model="postData.text"></textarea>
+        <button type="submit" class="button button-positive button-block">Create</button>
+      </form>
+    </ion-content> -->
+  <!-- </body> -->
+
+</html>

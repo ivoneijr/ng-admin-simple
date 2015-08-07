@@ -1,0 +1,183 @@
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>The HTML5 Herald</title>
+  <link rel="stylesheet" href="http://ng-admin.marmelab.com/bower_components/ng-admin/build/ng-admin.min.css">
+
+  <script src="http://ng-admin.marmelab.com/bower_components/angular/angular.js"></script>
+  <script src="http://ng-admin.marmelab.com/bower_components/ng-admin/build/ng-admin.min.js"></script>
+  <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.16/angular-resource.min.js"></script>
+
+  <script>
+    (function () {
+        "use strict";
+
+        // angular.module('ngResourceApp', ['ngResource'])
+
+        //   .factory('Resource', function($resource) {
+        //     return $resource('http://localhost:3000/resources/:id');
+        //   })
+
+        //   .controller('ResourceController', function($scope, Resource) {
+
+        //     $scope.title = "Resources";
+        //     $scope.getResources = Resource.query();
+
+        //   });
+
+        var app = angular.module('myApp', ['ng-admin','ngResource']);
+
+        app.factory('Resource', function($resource) {
+          return $resource('http://localhost:3000/resources/:id');
+        });
+
+        app.controller('ResourceController', function($scope, Resource) {
+          $scope.getResources = function(){
+            return Resource.query();
+          };
+        });
+
+
+
+
+
+
+
+        app.config(function (NgAdminConfigurationProvider, RestangularProvider) {
+            var nga = NgAdminConfigurationProvider;
+
+            // use the custom query parameters function to format the API request correctly
+            RestangularProvider.addFullRequestInterceptor(function(element, operation, what, url, headers, params) {
+                if (operation == "getList") {
+
+                    delete params._page;
+                    delete params._perPage;
+
+                    params.sort= ""
+                    if (params._sortDir!="ASC") {
+                      params.sort+="-"
+                    }
+                    params.sort+=(params._sortField || "id")
+                    delete params._sortField;
+                    delete params._sortDir;
+                }
+                return { params: params };
+            });
+
+            var admin = nga.application('Atlas Middleware Admin') // application main title
+                .baseApiUrl('http://prod-04:3000/'); // main API endpoint
+
+            // define all entities at the top to allow references between them
+            var resource = nga.entity('resources') // the API endpoint for resources will be http://localhost:3000/resources/:id
+              .identifier(nga.field('id'));
+            // set the application entities
+            admin
+                .addEntity(resource);
+
+            resource.listView()
+              .title('Resources')
+              .infinitePagination(true)
+              .perPage(30)
+              .fields([
+
+                nga.field('id'),
+                nga.field('codproduto'),
+                nga.field('descricao1'),
+                nga.field('precovenda1'),
+                nga.field('created_at'),
+                nga.field('updated_at')
+              ])
+
+              .listActions(['show', 'edit', 'delete']);
+
+            resource.creationView()
+                .fields([
+                    nga.field('codproduto') // the default edit field type is "string", and displays as a text input
+                        .attributes({ placeholder: 'the code' }) // you can add custom attributes, too
+                        .validation({ required: true, minlength: 3, maxlength: 100 }), // add validation rules for fields
+                    nga.field('descricao1', 'text') // text field type translates to a textarea
+                ]);
+
+            resource.editionView()
+                .title('Edit Resource') // title() accepts a template string, which has access to the entry
+                .actions(['list', 'show', 'delete']) // choose which buttons appear in the top action bar. Show is disabled by default
+                .fields([
+                    resource.creationView().fields(), // fields() without arguments returns the list of fields. That way you can reuse fields from another view to avoid repetition
+                ]);
+
+            resource.showView() // a showView displays one entry in full page - allows to display more data than in a a list
+              .fields([
+                  nga.field('id'),
+                  resource.editionView().fields(), // reuse fields from another view in another order
+              ]);
+
+            admin.menu(nga.menu()
+                .addChild(nga.menu(resource).icon('<span class="glyphicon glyphicon-file"></span>')) // customize the entity menu icon
+            );
+
+            nga.configure(admin);
+        });
+
+    }());
+  </script>
+</head>
+
+<!-- body ng-app="myApp">
+
+  <div ng-controller="ResourceController">
+    <input type="text" placeholder="filtrar" ng-model="search">
+
+    <table style="width:60%" border="1">
+      <tr>
+        <td>ID</td>
+        <td>CODPRODUTO</td>
+        <td>DECRICAO1</td>
+        <td>PRECOVENDA1</td>
+        <td>APLICACAO</td>
+        <td>CREATED</td>
+        <td>UPDATED</td>
+      </tr>
+      <tr ng-repeat="resource in getResources | filter: search" >
+        <td>{{ resource.id }} </td>
+        <td>{{ resource.codproduto }}</td>
+        <td>{{ resource.descricao1 }}</td>
+        <td>{{ resource.precovenda1 }}</td>
+        <td>{{ resource.aplicacao }}</td>
+        <td>{{ resource.created_at }}</td>
+        <td>{{ resource.updated_at }}</td>
+      </tr>
+
+    </table>
+  </div>
+
+</body -->
+
+
+  <body ng-app="myApp">
+    <div ui-view></div>
+  </body>
+
+</html>
+
+
+
+
+
+
+
+
+
+angular.module('myApp', ['ng-admin','ngResource']);
+    angular.module('myApp').factory('Resource',
+      function($resource) {
+        return $resource('http://localhost:3000/resources/:id');
+      }
+    );
+
+    angular.module('myApp').controller('ResourceController',
+      function($scope, Resource) {
+        $scope.title = "Resources";
+        $scope.getResources = Resource.query();
+      }
+    );
